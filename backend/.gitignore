@@ -1,0 +1,17 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Dataset (DO NOT COMMIT)
+plant_dataset/
+plant-dataset/
+
+# Old / unused models
+*.h5
+
+# OS files
+.DS_Store
+Thumbs.db
