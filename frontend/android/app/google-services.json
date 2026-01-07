@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "37006043538",
+    "project_id": "agritech-7bb79",
+    "storage_bucket": "agritech-7bb79.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:37006043538:android:e89a04ddb23644953db94b",
+        "android_client_info": {
+          "package_name": "com.example.smart_agriculture_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "37006043538-gtn90cidrs984869626j6k28i5esai9v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCiv8N-E2vFHaquVzddopw5yYr0Q8L_G5k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "37006043538-gtn90cidrs984869626j6k28i5esai9v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
