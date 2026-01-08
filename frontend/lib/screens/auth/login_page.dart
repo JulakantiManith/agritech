@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import '../../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,61 +13,48 @@ class _LoginPageState extends State<LoginPage> {
   final passwordController = TextEditingController();
   String message = "";
 
-  Future<void> login() async {
+  Future<void> handleLogin() async {
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        message = e.message ?? "Login failed";
-      });
-    }
-  }
-
-  Future<void> signup() async {
-    try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        message = e.message ?? "Signup failed";
-      });
-    }
-  }
-
-  Future<void> signInWithGoogle() async {
-    try {
-      final googleUser = await GoogleSignIn().signIn();
-
-      if (googleUser == null) {
-        print("Google sign-in cancelled");
-        return;
-      }
-
-      final googleAuth = await googleUser.authentication;
-
-      if (googleAuth.idToken == null) {
-        throw Exception("Missing Google ID token");
-      }
-
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+      await AuthService.login(
+        emailController.text.trim(  ),
+        passwordController.text.trim(),
       );
 
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      await AuthService.fetchJwtToken();
+
     } catch (e) {
-      print("GOOGLE SIGN-IN ERROR: $e");
       setState(() {
         message = e.toString();
       });
     }
   }
 
+  Future<void> handleSignup() async {
+    try {
+      await AuthService.signup(
+        emailController.text.trim(),
+        passwordController.text.trim(),
+      );
+
+      await AuthService.fetchJwtToken();
+
+    } catch (e) {
+      setState(() {
+        message = e.toString();
+      });
+    }
+  }
+
+  Future<void> handleGoogleLogin() async {
+    try {
+      await AuthService.signInWithGoogle();
+      await AuthService.fetchJwtToken();
+    } catch (e) {
+      setState(() {
+        message = e.toString();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,12 +74,22 @@ class _LoginPageState extends State<LoginPage> {
               decoration: const InputDecoration(labelText: "Password"),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: login, child: const Text("Login")),
-            ElevatedButton(onPressed: signup, child: const Text("Signup")),
+
             ElevatedButton(
-              onPressed: signInWithGoogle,
+              onPressed: handleLogin,
+              child: const Text("Login"),
+            ),
+
+            ElevatedButton(
+              onPressed: handleSignup,
+              child: const Text("Signup"),
+            ),
+
+            ElevatedButton(
+              onPressed: handleGoogleLogin,
               child: const Text("Sign in with Google"),
             ),
+
             const SizedBox(height: 20),
             Text(message, style: const TextStyle(color: Colors.red)),
           ],

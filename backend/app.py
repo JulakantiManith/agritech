@@ -1,16 +1,46 @@
+from fastapi import Depends, Header
+from auth.jwt_handler import verify_token
+from auth.jwt_handler import create_access_token
+
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 import tensorflow as tf
 import numpy as np
 from PIL import Image
 import os
+import json
+
+
+def jwt_required(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing token")
+
+    token = authorization.replace("Bearer ", "")
+    payload = verify_token(token)
+
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    return payload
+
 
 app = FastAPI(title="Plant Disease Detection API")
+@app.post("/token")
+def generate_token(user: dict):
+    """
+    Expects: { "email": "user@gmail.com" }
+    """
+    token = create_access_token({"sub": user["email"]})
+    return {"access_token": token}
+
 
 # -------------------------------
 # Load model once
 # -------------------------------
 MODEL_PATH = "model/plant_disease_mobilenet.keras"
 model = tf.keras.models.load_model(MODEL_PATH)
+CLASS_NAMES="model/class_names.json"
 
 IMG_SIZE = 224
 
@@ -18,7 +48,10 @@ IMG_SIZE = 224
 # Load class names (same order as training)
 # IMPORTANT: folder name must match training
 # -------------------------------
-CLASS_NAMES = sorted(os.listdir("plant_dataset"))
+
+with open("model/class_names.json", "r") as f:
+    CLASS_NAMES = json.load(f)
+CLASS_NAMES = {int(k): v for k, v in CLASS_NAMES.items()}
 
 # -------------------------------
 # TREATMENT DATASET (FULL)
@@ -189,15 +222,20 @@ TREATMENTS = {
 # -------------------------------
 def preprocess_image(image: Image.Image):
     image = image.resize((IMG_SIZE, IMG_SIZE))
-    image = np.array(image) / 255.0
+    image = np.array(image)
+    image = preprocess_input(image)
     image = np.expand_dims(image, axis=0)
     return image
+
 
 # -------------------------------
 # Prediction Endpoint
 # -------------------------------
 @app.post("/predict")
-async def predict(file: UploadFile = File(...)):
+async def predict(
+    file: UploadFile = File(...),
+    user=Depends(jwt_required)
+):
     try:
         image = Image.open(file.file).convert("RGB")
         img_array = preprocess_image(image)
@@ -206,7 +244,20 @@ async def predict(file: UploadFile = File(...)):
         idx = int(np.argmax(preds))
         confidence = float(preds[idx])
 
+        if confidence < 0.3:
+            return {
+                "plant": "Unknown",
+                "disease": "Low confidence prediction",
+                "confidence": round(confidence * 100, 2),
+                "treatment": {
+                    "chemical": [],
+                    "organic": ["Please upload a clear leaf image"]
+                }
+        }
+
+
         label = CLASS_NAMES[idx]
+
 
         if "___" in label:
             plant, disease = label.split("___")
