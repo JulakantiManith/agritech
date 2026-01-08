@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/splash/splash_page.dart';
+
 
 import 'core/auth/auth_gate.dart';
 import 'core/constants/api_constants.dart';
@@ -11,7 +13,7 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   ApiConstants.jwtToken = prefs.getString("jwt");
-  
+
   runApp(const MyApp());
 }
 
@@ -20,9 +22,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: AuthGate(),
+        initialRoute: "/",
+        routes: {
+          "/": (_) => const SplashPage(),
+          "/auth": (_) => const AuthGate(),
+        },
     );
   }
 }
